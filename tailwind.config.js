@@ -1,41 +1,37 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: ["class"],
   content: [
-    "./pages/**/*.{js,jsx}",
-    "./components/**/*.{js,jsx}",
-    "./app/**/*.{js,jsx}",
-    "./src/**/*.{js,jsx}",
     "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
-      // 1. Custom Animations
       animation: {
-        "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "shake": "shake 0.5s cubic-bezier(.36,.07,.19,.97) both",
+        blob: "blob 7s infinite",
+        shine: "shine 1s forwards", // Used for button hover
       },
-      // 2. Custom Keyframes
       keyframes: {
-        shake: {
-          "10%, 90%": {
-            transform: "translate3d(-1px, 0, 0)",
+        blob: {
+          "0%": {
+            transform: "translate(0px, 0px) scale(1)",
           },
-          "20%, 80%": {
-            transform: "translate3d(2px, 0, 0)",
+          "33%": {
+            transform: "translate(30px, -50px) scale(1.1)",
           },
-          "30%, 50%, 70%": {
-            transform: "translate3d(-4px, 0, 0)",
+          "66%": {
+            transform: "translate(-20px, 20px) scale(0.9)",
           },
-          "40%, 60%": {
-            transform: "translate3d(4px, 0, 0)",
+          "100%": {
+            transform: "translate(0px, 0px) scale(1)",
           },
+        },
+        shine: {
+          "100%": { left: "125%" },
         },
       },
     },
   },
-  // 3. Plugins
   plugins: [
-    require("tailwindcss-animate"), // Required for 'animate-in', 'zoom-in', etc.
+    require("tailwindcss-animate"),
   ],
 }
