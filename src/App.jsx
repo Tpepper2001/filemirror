@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { createRoot } from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route, useParams, Link } from 'react-router-dom';
 import { Lock, Unlock, Link as LinkIcon, Copy, Check, ArrowRight, ShieldCheck, Loader2 } from 'lucide-react';
 import CryptoJS from 'crypto-js';
