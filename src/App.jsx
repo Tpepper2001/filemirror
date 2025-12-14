@@ -10,8 +10,8 @@ import './App.css'; // Importing the CSS file
 // ==========================================
 // CONFIGURATION
 // ==========================================
-const supabaseUrl = "YOUR_SUPABASE_URL";
-const supabaseKey = "YOUR_SUPABASE_ANON_KEY";
+const supabaseUrl = "https://wzgjecyzxnohieoijcwr.supabase.co";
+const supabaseKey = "";eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6Z2plY3l6eG5vaGllb2lqY3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3MDE4NjcsImV4cCI6MjA4MTI3Nzg2N30._XOGAVxWr1rxND0gUP8AEcIDoU9v5xyqnnl8mB4eMNs
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
