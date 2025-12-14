@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter as Router, Routes, Route, useParams, Link } from 'react-router-dom';
-import { Lock, Unlock, Link as LinkIcon, Copy, Check, ArrowRight, ShieldCheck, Loader2 } from 'lucide-react';
+import { BrowserRouter as Router, Routes, Route, useParams } from 'react-router-dom';
+import { Lock, Unlock, Link as LinkIcon, Copy, Check, ArrowRight, ShieldCheck, Loader2, FileText, Globe } from 'lucide-react';
 import CryptoJS from 'crypto-js';
 
 // ==========================================
@@ -13,9 +13,44 @@ const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
-// UTILS
+// UTILS & UI COMPONENTS
 // ==========================================
 const Spinner = () => <Loader2 className="w-5 h-5 animate-spin" />;
+
+// Background Component with Mesh Gradients and Grid
+const Background = () => (
+  <div className="fixed inset-0 z-0 overflow-hidden bg-[#030712]">
+    {/* Grid Pattern */}
+    <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+    
+    {/* Radial Glows */}
+    <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow"></div>
+    <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] mix-blend-screen"></div>
+    
+    {/* Noise Texture for that premium feel */}
+    <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+  </div>
+);
+
+const Card = ({ children, className = "" }) => (
+  <div className={`relative z-10 bg-gray-900/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden ${className}`}>
+    {/* Top Highlight Line */}
+    <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+    {children}
+  </div>
+);
+
+const InputField = ({ icon: Icon, ...props }) => (
+  <div className="relative group">
+    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-indigo-400 transition-colors">
+      <Icon className="w-5 h-5" />
+    </div>
+    <input
+      {...props}
+      className="w-full bg-black/40 border border-white/10 text-white pl-12 pr-4 py-4 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 outline-none transition-all placeholder:text-gray-600 hover:border-white/20"
+    />
+  </div>
+);
 
 // ==========================================
 // COMPONENT: CREATE GATE
@@ -33,11 +68,7 @@ const CreateGate = () => {
     setLoading(true);
 
     try {
-      // 1. Encrypt the link using the password
-      // We use AES encryption so the DB never sees the real link or the password
       const encryptedData = CryptoJS.AES.encrypt(link, password).toString();
-
-      // 2. Upload to Supabase
       const { data, error } = await supabase
         .from('gates')
         .insert([{ encrypted_data: encryptedData }])
@@ -47,7 +78,7 @@ const CreateGate = () => {
       if (error) throw error;
       setResultId(data.id);
     } catch (err) {
-      alert("Error creating gate: " + err.message);
+      alert("Error: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -62,96 +93,85 @@ const CreateGate = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-600 rounded-full blur-[120px] opacity-20"></div>
-        <div className="absolute top-40 -left-20 w-72 h-72 bg-blue-600 rounded-full blur-[100px] opacity-20"></div>
-      </div>
+    <div className="min-h-screen flex items-center justify-center p-6 font-sans">
+      <Background />
 
-      <div className="relative z-10 w-full max-w-lg">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2">
-            SecureLink Gate
+      <div className="w-full max-w-lg relative z-10">
+        <div className="text-center mb-10 space-y-2">
+          <div className="inline-flex items-center justify-center p-3 bg-white/5 border border-white/10 rounded-2xl mb-4 shadow-lg shadow-indigo-500/10">
+            <ShieldCheck className="w-8 h-8 text-indigo-400" />
+          </div>
+          <h1 className="text-5xl font-bold tracking-tight text-white drop-shadow-sm">
+            Secure<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Gate</span>
           </h1>
-          <p className="text-slate-400">Encrypt and password-protect your file links.</p>
+          <p className="text-gray-400 text-lg">Military-grade encryption for your shared links.</p>
         </div>
 
         {!resultId ? (
-          <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 p-8 rounded-2xl shadow-2xl">
+          <Card className="p-8">
             <form onSubmit={handleCreate} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Target URL</label>
-                <div className="relative">
-                  <LinkIcon className="absolute left-3 top-3.5 text-slate-500 w-5 h-5" />
-                  <input
-                    type="url"
-                    required
-                    placeholder="https://dropbox.com/file..."
-                    className="w-full bg-slate-900/50 border border-slate-600 text-white pl-10 pr-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                    value={link}
-                    onChange={(e) => setLink(e.target.value)}
-                  />
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300 ml-1">Destination URL</label>
+                <InputField 
+                  icon={Globe}
+                  type="url"
+                  required
+                  placeholder="https://dropbox.com/file..."
+                  value={link}
+                  onChange={(e) => setLink(e.target.value)}
+                />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Set Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3.5 text-slate-500 w-5 h-5" />
-                  <input
-                    type="text"
-                    required
-                    placeholder="SecretKey123"
-                    className="w-full bg-slate-900/50 border border-slate-600 text-white pl-10 pr-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300 ml-1">Access Password</label>
+                <InputField 
+                  icon={Lock}
+                  type="text"
+                  required
+                  placeholder="Create a strong password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </div>
 
               <button
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-lg transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
+                className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 p-[1px] focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-gray-900"
               >
-                {loading ? <Spinner /> : <>Create Secure Gate <ArrowRight className="w-4 h-4" /></>}
+                <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2E8F0_0%,#312E81_50%,#E2E8F0_100%)]" />
+                <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-xl bg-gray-900/90 px-8 py-4 text-sm font-bold text-white backdrop-blur-3xl transition-all group-hover:bg-gray-900/80">
+                  {loading ? <Spinner /> : <span className="flex items-center gap-2">Encrypt & Generate Link <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></span>}
+                </span>
               </button>
             </form>
-          </div>
+          </Card>
         ) : (
-          <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 p-8 rounded-2xl shadow-2xl animate-fade-in-up">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/20">
-                <ShieldCheck className="w-8 h-8 text-green-500" />
+          <Card className="p-8 animate-in slide-in-from-bottom-4 duration-500">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/30 shadow-[0_0_40px_rgba(34,197,94,0.2)]">
+                <Check className="w-8 h-8 text-green-400" />
               </div>
-              <h3 className="text-xl font-bold text-white">Link Secured!</h3>
-              <p className="text-slate-400 text-sm">Share this URL with the recipient.</p>
+              <h3 className="text-2xl font-bold text-white">Encrypted Successfully</h3>
+              <p className="text-gray-400 mt-2">Your link has been secured. Copy the URL below.</p>
             </div>
 
-            <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-600 mb-6">
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2">Gate URL</p>
-              <div className="flex items-center gap-3">
-                <input 
-                  readOnly 
-                  value={shareUrl} 
-                  className="bg-transparent text-blue-400 text-sm flex-1 outline-none truncate font-mono"
-                />
-                <button 
-                  onClick={copyToClipboard}
-                  className="text-slate-400 hover:text-white transition-colors"
-                >
-                  {copied ? <Check className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5" />}
-                </button>
-              </div>
+            <div className="bg-black/40 border border-white/10 p-1 rounded-xl flex items-center mb-6 pl-4 group hover:border-indigo-500/30 transition-colors">
+              <span className="text-gray-400 text-sm truncate flex-1 font-mono">{shareUrl}</span>
+              <button 
+                onClick={copyToClipboard}
+                className="p-3 rounded-lg bg-gray-800 hover:bg-indigo-600 hover:text-white text-gray-400 transition-all"
+              >
+                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+              </button>
             </div>
 
             <button
               onClick={() => { setResultId(null); setLink(''); setPassword(''); }}
-              className="w-full py-3 text-slate-300 hover:text-white font-medium transition-colors"
+              className="w-full py-4 text-gray-400 hover:text-white text-sm font-medium transition-colors border-t border-white/5 mt-2"
             >
-              Create Another
+              Create New Link
             </button>
-          </div>
+          </Card>
         )}
       </div>
     </div>
@@ -174,27 +194,24 @@ const AccessGate = () => {
     setError('');
 
     try {
-      // 1. Fetch encrypted blob from Supabase
       const { data, error: dbError } = await supabase
         .from('gates')
         .select('encrypted_data')
         .eq('id', id)
         .single();
 
-      if (dbError || !data) throw new Error("Gate not found");
+      if (dbError || !data) throw new Error("Link not found or expired.");
 
-      // 2. Attempt Decrypt locally
       const bytes = CryptoJS.AES.decrypt(data.encrypted_data, password);
       const originalLink = bytes.toString(CryptoJS.enc.Utf8);
 
-      // 3. Validate Result
       if (!originalLink || !originalLink.startsWith('http')) {
-        throw new Error("Incorrect password");
+        throw new Error("Incorrect password.");
       }
 
       setDecryptedLink(originalLink);
     } catch (err) {
-      setError("Access Denied: " + (err.message === "Gate not found" ? "Invalid URL" : "Incorrect Password"));
+      setError(err.message === "Incorrect password." ? "Incorrect password provided." : "Invalid or expired link.");
     } finally {
       setLoading(false);
     }
@@ -202,73 +219,82 @@ const AccessGate = () => {
 
   if (decryptedLink) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 relative">
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-        <div className="bg-slate-800/80 backdrop-blur-md border border-slate-600 p-10 rounded-2xl shadow-2xl max-w-md w-full text-center relative z-10">
-          <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
-            <Unlock className="w-10 h-10 text-green-400" />
+      <div className="min-h-screen flex items-center justify-center p-6 font-sans">
+        <Background />
+        <Card className="w-full max-w-md p-10 text-center animate-in zoom-in-95 duration-300">
+          <div className="w-24 h-24 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-green-500/30 shadow-[0_0_50px_rgba(16,185,129,0.2)]">
+            <Unlock className="w-12 h-12 text-green-400" />
           </div>
           <h2 className="text-3xl font-bold text-white mb-2">Access Granted</h2>
-          <p className="text-slate-400 mb-8">You can now access the protected file.</p>
+          <p className="text-gray-400 mb-8">The secure vault has been opened.</p>
           
           <a
             href={decryptedLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="block w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl transition-all transform hover:-translate-y-1 shadow-lg shadow-green-900/20"
+            className="group flex items-center justify-center w-full bg-white text-gray-900 hover:bg-gray-100 font-bold py-4 rounded-xl transition-all shadow-lg shadow-white/10"
           >
-            Open Resource
+            <span className="flex items-center gap-2">
+              Proceed to File <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </span>
           </a>
-        </div>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 relative">
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+    <div className="min-h-screen flex items-center justify-center p-6 font-sans">
+      <Background />
       
-      <div className="bg-slate-800/80 backdrop-blur-md border border-slate-600 p-8 rounded-2xl shadow-2xl max-w-md w-full relative z-10">
+      <Card className="w-full max-w-md p-8 animate-in fade-in zoom-in-95 duration-500">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
-            <Lock className="w-8 h-8 text-red-500" />
+          <div className="relative inline-block">
+            <div className="w-20 h-20 bg-red-500/10 rounded-2xl flex items-center justify-center mb-4 border border-red-500/20 rotate-3 transition-transform hover:rotate-6">
+              <Lock className="w-10 h-10 text-red-500" />
+            </div>
+            <div className="absolute -bottom-2 -right-2 bg-gray-800 text-[10px] text-gray-400 px-2 py-1 rounded border border-gray-700">
+              AES-256
+            </div>
           </div>
-          <h2 className="text-2xl font-bold text-white">Restricted Access</h2>
-          <p className="text-slate-400 mt-1">This file is password protected.</p>
+          <h2 className="text-2xl font-bold text-white mt-2">Restricted Access</h2>
+          <p className="text-gray-400 text-sm mt-1">Enter credentials to decrypt this link.</p>
         </div>
 
-        <form onSubmit={handleUnlock} className="space-y-4">
-          <div className="relative group">
-            <input
-              type="password"
-              placeholder="Enter Access Password"
-              className="w-full bg-slate-900 border border-slate-600 text-white text-center text-lg py-4 rounded-xl focus:ring-2 focus:ring-red-500/50 focus:border-red-500 outline-none transition-all placeholder:text-slate-600"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+        <form onSubmit={handleUnlock} className="space-y-5">
+          <div className="space-y-2">
+             <InputField 
+                icon={Lock}
+                type="password"
+                placeholder="Enter Password"
+                className="w-full bg-black/40 border border-white/10 text-white pl-12 pr-4 py-4 rounded-xl focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 outline-none transition-all placeholder:text-gray-600 text-center tracking-widest"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
           </div>
 
           {error && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center">
-              {error}
+            <div className="p-4 bg-red-950/30 border border-red-500/20 rounded-xl flex items-center gap-3 animate-in shake">
+               <div className="w-2 h-2 rounded-full bg-red-500"></div>
+               <span className="text-red-400 text-sm font-medium">{error}</span>
             </div>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-white text-slate-900 hover:bg-slate-200 font-bold py-4 rounded-xl transition-colors shadow-lg flex justify-center items-center"
+            className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(220,38,38,0.3)] hover:shadow-[0_0_30px_rgba(220,38,38,0.5)] flex justify-center items-center"
           >
-            {loading ? <Spinner /> : "Unlock File"}
+            {loading ? <Spinner /> : "Unlock Content"}
           </button>
         </form>
-      </div>
+      </Card>
     </div>
   );
 };
 
 // ==========================================
-// MAIN APP ROUTER
+// MAIN APP ENTRY POINT
 // ==========================================
 function App() {
   return (
@@ -280,6 +306,7 @@ function App() {
     </Router>
   );
 }
+
 const root = createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
